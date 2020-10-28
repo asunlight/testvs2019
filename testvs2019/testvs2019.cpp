@@ -5,7 +5,9 @@
 #include<algorithm>
 #include<string>
 #include<tuple>
+#include<map>
 using namespace std;
+map<int, tuple<int, bool>> cachmap;
 
 void Split(const std::string& src, const std::string& separator, std::vector<int>& dest) //字符串分割到数组
 {
@@ -36,7 +38,7 @@ void Split(const std::string& src, const std::string& separator, std::vector<int
 
 
 
-void initial(vector<vector<int>>& dga,int n)
+void initial(vector<vector<int>>& dga, int n)
 {
 	dga.clear();
 	vector<int> temp;
@@ -46,29 +48,36 @@ void initial(vector<vector<int>>& dga,int n)
 		dga.push_back(temp);
 }
 
-std::tuple<int,bool> longestp(vector<vector<int>>& dga, int i)//0到节点i是否有链接，距离
+std::tuple<int, bool> longestp(vector<vector<int>>& dga, int i)//0到节点i是否有链接，距离
 {
 	if (i == 0)//可以连接到0，距离为0
-		return make_tuple<int, bool>(0,true);
-	if(i==-1)//连接不到
+		return make_tuple<int, bool>(0, true);
+	if (i == -1)//连接不到
 		return make_tuple<int, bool>(0, false);
-	tuple<int, bool> maxn{0,false};
-	
+	auto it = cachmap.find(i);
+	if (it != cachmap.end())//已经算过了
+		return it->second;
+
+
+	tuple<int, bool> maxn{ 0,false };
+
 	for (int k = 0; k < dga.size(); k++)
 	{
 		tuple<int, bool> tmtp{ 0,false };
 		if (dga[k][i] != -1)//k到i是否有连接
 		{
-			tmtp = longestp(dga,k);//k到0是否有链接，距离多少
+			tmtp = longestp(dga, k);//k到0是否有链接，距离多少
 			if (get<1>(tmtp))//有连接
 			{
 				get<0>(tmtp)++;
 				//get<0>(tm)++;
 			}
 		}
-		if (get<1>(tmtp)&& get<0>(tmtp)> get<0>(maxn))//有连接，且比现有最长连接长
+		if (get<1>(tmtp) && get<0>(tmtp) > get<0>(maxn))//有连接，且比现有最长连接长
 			maxn = tmtp;
 	}
+
+	cachmap[i] = maxn;
 	return maxn;
 }
 
@@ -76,13 +85,14 @@ std::tuple<int,bool> longestp(vector<vector<int>>& dga, int i)//0到节点i是�
 int main()
 {
 	vector<vector<int>> dga;
-	int n,t,j;
+	int n;
 	string s;
 	cin >> n;
 	vector<int> vin;
 	while (n != 0)
 	{
-		initial(dga,n);
+		initial(dga, n);
+		cachmap.clear();
 		std::getline(cin, s);
 		for (int i = 0; i < n; i++)
 		{
@@ -90,18 +100,18 @@ int main()
 			if (s.size() == 0)//此行没有输入
 				continue;
 			Split(s, " ", vin);//解析成int数组
-			for(const auto &it:vin)
-				if(i!=it)//自己到自己的肯定没有
+			for (const auto& it : vin)
+				if (i != it)//自己到自己的肯定没有
 					dga[i][it] = 1;
-			
+
 		}
-		
-		int maxl=0;
-		tuple<int, bool> tm = {0,false};
+
+		int maxl = 0;
+		tuple<int, bool> tm = { 0,false };
 		for (int i = 0; i < n; i++)
 		{
-			tm=longestp(dga, i);
-			if (get<1>(tm)&&get<0>(tm)>maxl)
+			tm = longestp(dga, i);
+			if (get<1>(tm) && get<0>(tm) > maxl)
 				maxl = get<0>(tm);
 		}
 		std::cout << maxl << endl;
@@ -164,7 +174,7 @@ int main()
 	char t;
 	cin >> k;//接收k
 	cin >> t;//接受分割符
-	
+
 	vector<string> vs;//用来存储分割后的歌曲信息
 
 	//接受歌曲信息输入，每输入一个，解析一个，然后存进去
